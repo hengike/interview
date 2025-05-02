@@ -1,33 +1,20 @@
 package com.ecosio;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URI;
-import java.net.URL;
-import java.net.URLConnection;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
+/**
+ * Fetches website content using Java's {@link HttpClient}, handling redirects and timeouts.
+ */
 public class WebsiteFetcher {
 
     public static final int TIMEOUT_SECONDS = 3;
     private static final Logger logger = Logger.getLogger(WebsiteFetcher.class.getName());
-
-    @Deprecated //TODO cleanup
-    public String fetchContent(String urlString) throws IOException {
-        URL url = new URL(urlString);
-        URLConnection conn = url.openConnection();
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
-            return reader.lines().collect(Collectors.joining("\n"));
-        }
-    }
 
     public String fetchContentNew(String urlString) throws IOException, InterruptedException {
         try {
