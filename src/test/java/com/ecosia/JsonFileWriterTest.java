@@ -13,9 +13,9 @@ public class JsonFileWriterTest {
     @Test
     void testToJson_withEscaping() {
         List<Link> links = List.of(
-                new Link("Regular Label", "http://example.com"),
-                new Link("Quote \"Test\"", "http://test.com/path\"q"),
-                new Link("Backslash\\Test", "http://site.com/\\path")
+                new Link("Regular Label", "http://example.com", "http://example.com"),
+                new Link("Quote \"Test\"", "http://test.com/path\"q", "http://test.com/path\"q"),
+                new Link("Backslash\\Test", "http://site.com/\\path", "http://site.com/\\path")
         );
 
         String json = JsonFileWriter.toJson(links);

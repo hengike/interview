@@ -57,32 +57,32 @@ public class WebsiteFetcherTest {
         String url = baseUrl + "/ok";
 
         // WHEN
-        String result = fetcher.fetchContentNew(url);
+        String result = fetcher.fetchContent(url);
 
         // THEN
         assertEquals("Success response", result);
     }
 
     @Test
-    void fetchContentNew_throwsIOException_onNon200() {
+    void fetchContent_throwsIOException_onNon200() {
         // GIVEN
         String url = baseUrl + "/error";
 
         // WHEN & THEN
         IOException ex = assertThrows(IOException.class, () ->
-                fetcher.fetchContentNew(url)
+                fetcher.fetchContent(url)
         );
         assertTrue(ex.getMessage().contains("Wrong HTTP response: 500"));
     }
 
     @Test
-    void fetchContentNew_throwsIOException_onTimeout() {
+    void fetchContent_throwsIOException_onTimeout() {
         // GIVEN
         String url = baseUrl + "/slow";
 
         // WHEN & THEN
         assertThrows(IOException.class, () ->
-                fetcher.fetchContentNew(url)
+                fetcher.fetchContent(url)
         );
     }
 

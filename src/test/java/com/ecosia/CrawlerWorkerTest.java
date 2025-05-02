@@ -36,13 +36,13 @@ public class CrawlerWorkerTest {
         String startUrl = "https://example.com";
         String html = "<a href='https://example.com/page1'>Link</a>";
 
-        Link link = new Link("https://example.com/page1", "https://example.com/page1");
-        when(fetcher.fetchContentNew(startUrl)).thenReturn(html);
-        when(extractor.extractLinks(html, startUrl, "example.com"))
+        Link link = new Link("https://example.com/page1", "https://example.com/page1", "https://example.com/page1");
+        when(fetcher.fetchContent(startUrl)).thenReturn(html);
+        when(extractor.extractLinks(html, startUrl, "example.com", true))
                 .thenReturn(List.of(link));
 
         urlQueue.offer(startUrl);
-        Runnable worker = new CrawlerWorker(fetcher, extractor, urlQueue, allLinks, "example.com", executor, 2);
+        Runnable worker = new CrawlerWorker(fetcher, extractor, urlQueue, allLinks, "example.com", true, executor, 2);
         executor.submit(worker);
 
         TimeUnit.MILLISECONDS.sleep(200); // let the worker do its job

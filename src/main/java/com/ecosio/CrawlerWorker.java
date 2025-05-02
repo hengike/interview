@@ -17,6 +17,7 @@ public class CrawlerWorker implements Runnable {
     private final ConcurrentLinkedQueue<String> urlQueue;
     private final CopyOnWriteArrayList<Link> allLinks;
     private final String domain;
+    private final Boolean subDomainCheck;
     private final ExecutorService executor;
     private final int maxThreads;
 
@@ -26,6 +27,7 @@ public class CrawlerWorker implements Runnable {
                          ConcurrentLinkedQueue<String> urlQueue,
                          CopyOnWriteArrayList<Link> allLinks,
                          String domain,
+                         Boolean subDomainCheck,
                          ExecutorService executor,
                          int maxThreads) {
         this.fetcher = fetcher;
@@ -33,6 +35,7 @@ public class CrawlerWorker implements Runnable {
         this.urlQueue = urlQueue;
         this.allLinks = allLinks;
         this.domain = domain;
+        this.subDomainCheck = subDomainCheck;
         this.executor = executor;
         this.maxThreads = maxThreads;
     }
@@ -47,15 +50,15 @@ public class CrawlerWorker implements Runnable {
 
             if (urlQueue.size() > 2 && executor instanceof ThreadPoolExecutor tpe
                     && tpe.getActiveCount() < maxThreads) {
-                executor.submit(new CrawlerWorker(fetcher, extractor, urlQueue, allLinks, domain, executor, maxThreads));
+                executor.submit(new CrawlerWorker(fetcher, extractor, urlQueue, allLinks, domain, subDomainCheck, executor, maxThreads));
             }
         }
     }
 
     private void processUrl(String url) {
         try {
-            String htmlContent = fetcher.fetchContentNew(url);
-            List<Link> links = extractor.extractLinks(htmlContent, url, domain);
+            String htmlContent = fetcher.fetchContent(url);
+            List<Link> links = extractor.extractLinks(htmlContent, url, domain, subDomainCheck);
             allLinks.addAll(links);
             for (Link link : links) {
                 if (visitedUrls.add(link.getUrl())) {

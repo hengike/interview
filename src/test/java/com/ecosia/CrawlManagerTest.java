@@ -18,7 +18,7 @@ public class CrawlManagerTest {
     @BeforeEach
     public void setUp() {
         manager = new CrawlManager(
-                new WebsiteFetcher(), new LinkExtractor(), "example.com", 2);
+                new WebsiteFetcher(), new LinkExtractor(), "example.com", true, 2);
     }
 
     @Test

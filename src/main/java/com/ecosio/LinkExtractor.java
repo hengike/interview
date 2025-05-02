@@ -1,6 +1,7 @@
 package com.ecosio;
 
 import com.ecosio.dto.Link;
+import com.ecosio.utility.WebUtility;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -23,8 +24,9 @@ public class LinkExtractor {
             "<a\\b[^>]*href\\s*=\\s*\"([^\"]*)\"[^>]*>(.*?)</a>", Pattern.CASE_INSENSITIVE);
 
     private static final List<String> EXCLUDED_SCHEMES = List.of("mailto:", "javascript:", "tel:");
+    //private static final List<String> EXCLUDED_CHAR = List.of("#", "?", "&", "="); // TODO should I keep this?
 
-    public List<Link> extractLinks(String html, String baseUrl, String domain) throws MalformedURLException {
+    public List<Link> extractLinks(String html, String baseUrl, String domain, Boolean subDomainCheck) throws MalformedURLException {
         List<Link> links = new ArrayList<>();
         Matcher matcher = LINK_PATTERN.matcher(html);
 
@@ -35,11 +37,16 @@ public class LinkExtractor {
             if (shouldExclude(href)) continue;
 
             URL absoluteUrl = new URL(new URL(baseUrl), href);
-            if (absoluteUrl.getHost().contains(domain)) {
+            boolean domainMatches = subDomainCheck
+                    ? absoluteUrl.getHost().contains(domain)
+                    : absoluteUrl.getHost().equalsIgnoreCase(domain);
+
+            if (domainMatches) {
                 logger.fine("Added link from domain: " + absoluteUrl);
                 links.add(new Link(
                         label.isEmpty() ? absoluteUrl.toString() : label,
-                        absoluteUrl.toString()
+                        absoluteUrl.toString(),
+                        WebUtility.normalizeUrl(absoluteUrl)
                 ));
             } else {
                 logger.fine("Excluded link from different domain: " + absoluteUrl);
@@ -50,6 +57,7 @@ public class LinkExtractor {
     }
 
     private boolean shouldExclude(String href) {
-        return EXCLUDED_SCHEMES.stream().anyMatch(href::startsWith);
+        return EXCLUDED_SCHEMES.stream().anyMatch(href::startsWith);/* ||
+        EXCLUDED_CHAR.stream().anyMatch(href::contains);*/ // TODO Should I keep this?
     }
 }

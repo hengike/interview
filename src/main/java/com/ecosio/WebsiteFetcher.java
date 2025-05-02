@@ -16,7 +16,7 @@ public class WebsiteFetcher {
     public static final int TIMEOUT_SECONDS = 3;
     private static final Logger logger = Logger.getLogger(WebsiteFetcher.class.getName());
 
-    public String fetchContentNew(String urlString) throws IOException, InterruptedException {
+    public String fetchContent(String urlString) throws IOException, InterruptedException {
         try {
             HttpClient client = HttpClient.newBuilder()
                     .followRedirects(HttpClient.Redirect.NORMAL)

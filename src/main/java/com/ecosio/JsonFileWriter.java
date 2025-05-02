@@ -17,7 +17,9 @@ public class JsonFileWriter {
     public static String writeLinksToJsonFile(List<Link> links, String baseFilename) {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
         String filePath = baseFilename + "_" + timestamp + ".json";
+
         String jsonContent = toJson(links);
+
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             writer.write(jsonContent);
             System.out.println("Links written to " + filePath);

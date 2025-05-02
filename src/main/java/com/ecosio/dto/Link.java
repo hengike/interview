@@ -3,15 +3,21 @@ package com.ecosio.dto;
 public class Link {
     String label;
     String url;
+    String normalizedUrl;
 
-    public Link(String label, String url) {
+    public Link(String label, String url, String normalizedUrl) {
         this.label = label;
         this.url = url;
+        this.normalizedUrl = normalizedUrl;
     }
 
     @Override
     public String toString() {
-        return "Label: " + getLabel() + " | URL: " + getUrl();
+        return "Label: " + getShortLabel() + " | URL: " + getUrl() + " | Normalized URL: " + getNormalizedUrl();
+    }
+
+    public String getShortLabel() {
+        return label.length() > 50 ? label.substring(0, 47) + "..." : label;
     }
 
     public String getUrl() {
@@ -22,8 +28,7 @@ public class Link {
         return label;
     }
 
-    public String getShortLabel() {
-        return label.length() > 50 ? label.substring(0, 47) + "..." : label;
+    public String getNormalizedUrl() {
+        return normalizedUrl;
     }
-
 }

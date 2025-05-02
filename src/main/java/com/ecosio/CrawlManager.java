@@ -14,15 +14,17 @@ public class CrawlManager {
     private final WebsiteFetcher fetcher;
     private final LinkExtractor extractor;
     private final String domain;
+    private final Boolean subDomainCheck;
     private final ExecutorService executor;
     private final int maxThreads;
     private final ConcurrentLinkedQueue<String> urlQueue;
     private final CopyOnWriteArrayList<Link> allLinks;
 
-    public CrawlManager(WebsiteFetcher fetcher, LinkExtractor extractor, String domain, int maxThreads) {
+    public CrawlManager(WebsiteFetcher fetcher, LinkExtractor extractor, String domain, Boolean subDomainCheck, int maxThreads) {
         this.fetcher = fetcher;
         this.extractor = extractor;
         this.domain = domain;
+        this.subDomainCheck = subDomainCheck;
         this.maxThreads = maxThreads;
         this.urlQueue = new ConcurrentLinkedQueue<>();
         this.allLinks = new CopyOnWriteArrayList<>();
@@ -31,7 +33,7 @@ public class CrawlManager {
 
     public void startCrawling(String startUrl) {
         urlQueue.offer(startUrl);
-        executor.submit(new CrawlerWorker(fetcher, extractor, urlQueue, allLinks, domain, executor, maxThreads));
+        executor.submit(new CrawlerWorker(fetcher, extractor, urlQueue, allLinks, domain, subDomainCheck, executor, maxThreads));
     }
 
     public List<Link> getAllLinks() {

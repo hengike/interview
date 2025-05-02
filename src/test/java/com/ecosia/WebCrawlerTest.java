@@ -32,9 +32,8 @@ public class WebCrawlerTest {
 
     @Test
     public void testGetAllLinksSortedReturnsSortedList() {
-        Link l1 = new Link("https://b.com", "https://b.com");
-        Link l2 = new Link("https://a.com", "https://a.com");
-
+        Link l1 = new Link("https://b.com", "https://b.com", "https://b.com");
+        Link l2 = new Link("https://a.com", "https://a.com", "https://a.com");
         when(crawlManagerMock.getAllLinks()).thenReturn(List.of(l1, l2));
 
         List<Link> sorted = webCrawler.getAllLinksSorted();

@@ -42,7 +42,7 @@ public class WebCrawlerIntegrationTest {
         String startUrl = "http://localhost:" + PORT + "/index.html";
         String domain = "http://localhost";
 
-        WebCrawler crawler = CrawlerFactory.create(domain, Duration.ofSeconds(5), 2);
+        WebCrawler crawler = CrawlerFactory.create(domain, Duration.ofSeconds(5), 2, true);
         crawler.startCrawling(startUrl);
         crawler.waitForItToFinish();
         List<Link> links = crawler.getAllLinksSorted();
