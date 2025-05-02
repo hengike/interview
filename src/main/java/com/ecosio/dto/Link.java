@@ -22,4 +22,8 @@ public class Link {
         return label;
     }
 
+    public String getShortLabel() {
+        return label.length() > 50 ? label.substring(0, 47) + "..." : label;
+    }
+
 }

@@ -17,9 +17,7 @@ public class Main {
         WebsiteFetcher websiteFetcher = new WebsiteFetcher();
         String html = websiteFetcher.fetchContentNew(baseUrl);
         LinkExtractor linkExtractor = new LinkExtractor();
-        List<Link> linkList = linkExtractor.extractLinks(html, baseUrl, getDomain(baseUrl));
-        for (Link link : linkList) {
-            System.out.println(link);
-        }
+        List<Link> allLinks = linkExtractor.extractLinks(html, baseUrl, getDomain(baseUrl));
+        JsonFileWriter.writeLinksToJsonFile(allLinks, "links");
     }
 }
