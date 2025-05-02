@@ -1,6 +1,11 @@
 package com.ecosio;
 
+import com.ecosio.dto.Link;
+
 import java.io.IOException;
+import java.util.List;
+
+import static com.ecosio.utility.WebUtility.getDomain;
 
 public class Main {
     public static void main(String[] args) throws IOException, InterruptedException { //TODO handle errors
@@ -10,6 +15,11 @@ public class Main {
         }
 
         WebsiteFetcher websiteFetcher = new WebsiteFetcher();
-        System.out.println(websiteFetcher.fetchContentNew(baseUrl));
+        String html = websiteFetcher.fetchContentNew(baseUrl);
+        LinkExtractor linkExtractor = new LinkExtractor();
+        List<Link> linkList = linkExtractor.extractLinks(html, baseUrl, getDomain(baseUrl));
+        for (Link link : linkList) {
+            System.out.println(link);
+        }
     }
 }
