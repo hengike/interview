@@ -26,7 +26,6 @@ public class CrawlManager {
     private final String domain;
     private final Boolean subDomainCheck;
     private final ExecutorService executor;
-    private final int maxThreads;
 
     private final ConcurrentLinkedQueue<String> urlQueue;
     private final CopyOnWriteArrayList<Link> allLinks;
@@ -37,7 +36,6 @@ public class CrawlManager {
         this.extractor = extractor;
         this.domain = domain;
         this.subDomainCheck = subDomainCheck;
-        this.maxThreads = maxThreads;
         this.urlQueue = new ConcurrentLinkedQueue<>();
         this.allLinks = new CopyOnWriteArrayList<>();
         this.executor = new ThreadPoolExecutor(
@@ -98,15 +96,10 @@ public class CrawlManager {
      * Indicates whether a new worker should be spawned.
      * A new worker is allowed if:
      * - there are multiple URLs in the queue
-     * - the thread pool is not fully utilized
      */
     public boolean shouldSpawnNew() {
-        return urlQueue.size() > 2
-                && executor instanceof ThreadPoolExecutor tpe
-                && tpe.getActiveCount() < maxThreads;
+        return urlQueue.size() > 2;
     }
-
-    // --- Getters ---
 
     public ConcurrentLinkedQueue<String> getUrlQueue() {
         return urlQueue;
