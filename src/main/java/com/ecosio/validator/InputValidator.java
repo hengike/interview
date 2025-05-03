@@ -12,6 +12,11 @@ public class InputValidator {
      */
     public static void validateUrl(String urlString) {
         try {
+
+            if (urlString == null) {
+                throw new IllegalArgumentException("URL is null");
+            }
+
             URI uri = URI.create(urlString);
             String scheme = uri.getScheme();
             String host = uri.getHost();

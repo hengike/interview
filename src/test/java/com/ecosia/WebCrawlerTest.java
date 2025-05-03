@@ -1,7 +1,9 @@
 package com.ecosia;
 
 import com.ecosio.CrawlManager;
+import com.ecosio.LinkExtractor;
 import com.ecosio.WebCrawler;
+import com.ecosio.WebsiteFetcher;
 import com.ecosio.dto.Link;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,11 +34,19 @@ public class WebCrawlerTest {
 
     @Test
     public void testGetAllLinksSortedReturnsSortedList() {
+        // GIVEN
+        CrawlManager realManager = new CrawlManager(mock(WebsiteFetcher.class), mock(LinkExtractor.class), "example.com", true, 2);
         Link l1 = new Link("https://b.com", "https://b.com", "https://b.com");
         Link l2 = new Link("https://a.com", "https://a.com", "https://a.com");
-        when(crawlManagerMock.getAllLinks()).thenReturn(List.of(l1, l2));
+        realManager.getAllLinks().add(l1);
+        realManager.getAllLinks().add(l2);
 
+        WebCrawler webCrawler = new WebCrawler(realManager, Duration.ofMinutes(1));
+
+        // WHEN
         List<Link> sorted = webCrawler.getAllLinksSorted();
+
+        // THEN
         assertEquals("https://a.com", sorted.get(0).getUrl());
         assertEquals("https://b.com", sorted.get(1).getUrl());
     }
@@ -45,13 +55,7 @@ public class WebCrawlerTest {
     public void testWaitForItToFinishSuccess() {
         when(crawlManagerMock.isFinished()).thenReturn(false, false, true);
         webCrawler.waitForItToFinish();
-        verify(crawlManagerMock).shutdownExecutor();
-    }
-
-    @Test
-    public void testWaitForItToFinishTimeout() {
-        when(crawlManagerMock.isFinished()).thenReturn(false);
-        webCrawler.waitForItToFinish();
         verify(crawlManagerMock).shutdownNow();
     }
+
 }

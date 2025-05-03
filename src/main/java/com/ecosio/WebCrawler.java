@@ -6,6 +6,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * High-level web crawler that launches and monitors the crawl lifecycle.
@@ -33,28 +37,36 @@ public class WebCrawler {
 
     public void waitForItToFinish() {
         Instant start = Instant.now();
-        while (true) {
-            if (crawlManager.isFinished()) {
-                crawlManager.shutdownExecutor();
-                break;
-            }
 
+        for (Future<?> future : crawlManager.getFutures()) {
             Duration elapsed = Duration.between(start, Instant.now());
-            if (elapsed.compareTo(timeout) > 0) {
-                System.err.println("Crawler timeout reached. Forcing shutdown.");
+            Duration remaining = timeout.minus(elapsed);
+
+            if (remaining.isNegative() || remaining.isZero()) {
+                System.err.println("Crawler timeout reached before all tasks completed. Forcing shutdown.");
                 crawlManager.shutdownNow();
-                break;
-            } else {
-                Duration remaining = timeout.minus(elapsed);
-                System.out.println("Crawler still running. Remaining time: " + remaining.toSeconds() + " seconds");
+                return;
             }
 
             try {
-                Thread.sleep(100); // TODO busy-waiting, we should move to Future implementation?
+                future.get(remaining.toMillis(), TimeUnit.MILLISECONDS);
+            } catch (TimeoutException e) {
+                System.err.println("A task timed out within the overall crawler timeout. Forcing shutdown.");
+                crawlManager.shutdownNow();
+                return;
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                break;
+                System.err.println("Interrupted while waiting for tasks. Forcing shutdown.");
+                crawlManager.shutdownNow();
+                return;
+            } catch (ExecutionException e) {
+                System.err.println("A task failed with an exception: " + e.getCause());
+                crawlManager.shutdownNow();
+                return;
             }
         }
+
+        System.out.println("All crawler tasks completed successfully within the timeout.");
+        crawlManager.shutdownNow();
     }
 }

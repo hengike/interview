@@ -11,10 +11,10 @@ public class Main {
 
     public static final Duration TIMEOUT = Duration.ofSeconds(5);
     public static final int THREADS = 10;
-    public static final boolean SUB_DOMAIN_CHECK = true;
+    public static final boolean SUB_DOMAIN_CHECK = false;
 
     public static void main(String[] args) throws IOException {
-        String baseUrl = "https://orf.at/";  // Replace with actual URL
+        String baseUrl = "https://ecosio.com/";  // Replace with actual URL
         if (args.length != 0) {
             baseUrl = args[0];
         }

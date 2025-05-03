@@ -5,68 +5,59 @@ import com.ecosio.dto.Link;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- * A worker that processes a URL from the queue, fetches its HTML content,
- * extracts links using {@link LinkExtractor}, and adds new, unvisited URLs back to the queue.
- * This class dynamically submits new worker instances if thread capacity and work remain.
+ * A worker that processes URLs from the shared queue. For each URL, it:
+ * <ul>
+ *     <li>Fetches the HTML content via {@link WebsiteFetcher}</li>
+ *     <li>Extracts links using {@link LinkExtractor}</li>
+ *     <li>Adds the extracted links to the shared collection of all links</li>
+ *     <li>Enqueues unvisited URLs back to the queue</li>
+ * </ul>
+ * This worker may dynamically submit new worker instances if there are pending URLs
+ * and thread capacity is available, as determined by the {@link CrawlManager}.
  */
 public class CrawlerWorker implements Runnable {
-    private final WebsiteFetcher fetcher;
-    private final LinkExtractor extractor;
-    private final ConcurrentLinkedQueue<String> urlQueue;
-    private final CopyOnWriteArrayList<Link> allLinks;
-    private final String domain;
-    private final Boolean subDomainCheck;
-    private final ExecutorService executor;
-    private final int maxThreads;
 
+    private static final Logger logger = Logger.getLogger(CrawlerWorker.class.getName());
     private static final Set<String> visitedUrls = ConcurrentHashMap.newKeySet();
 
-    public CrawlerWorker(WebsiteFetcher fetcher, LinkExtractor extractor,
-                         ConcurrentLinkedQueue<String> urlQueue,
-                         CopyOnWriteArrayList<Link> allLinks,
-                         String domain,
-                         Boolean subDomainCheck,
-                         ExecutorService executor,
-                         int maxThreads) {
-        this.fetcher = fetcher;
-        this.extractor = extractor;
-        this.urlQueue = urlQueue;
-        this.allLinks = allLinks;
-        this.domain = domain;
-        this.subDomainCheck = subDomainCheck;
-        this.executor = executor;
-        this.maxThreads = maxThreads;
+    private final CrawlManager crawlManager;
+
+    public CrawlerWorker(CrawlManager crawlManager) {
+        this.crawlManager = crawlManager;
     }
 
     @Override
     public void run() {
-        while (!executor.isShutdown() && !urlQueue.isEmpty()) {
-            String urlToProcess = urlQueue.poll();
+        while (!crawlManager.isFinished() && !crawlManager.isShutDown()) {
+            String urlToProcess = crawlManager.getUrlQueue().poll();
             if (urlToProcess != null) {
                 processUrl(urlToProcess);
             }
 
-            if (urlQueue.size() > 2 && executor instanceof ThreadPoolExecutor tpe
-                    && tpe.getActiveCount() < maxThreads) {
-                executor.submit(new CrawlerWorker(fetcher, extractor, urlQueue, allLinks, domain, subDomainCheck, executor, maxThreads));
+            if (crawlManager.shouldSpawnNew()) {
+                crawlManager.submitNewWorker();
             }
         }
     }
 
     private void processUrl(String url) {
         try {
-            String htmlContent = fetcher.fetchContent(url);
-            List<Link> links = extractor.extractLinks(htmlContent, url, domain, subDomainCheck);
-            allLinks.addAll(links);
+            String htmlContent = crawlManager.getFetcher().fetchContent(url);
+            List<Link> links = crawlManager.getExtractor().extractLinks(
+                    htmlContent, url, crawlManager.getDomain(), crawlManager.getSubDomainCheck()
+            );
+            crawlManager.getAllLinks().addAll(links);
             for (Link link : links) {
                 if (visitedUrls.add(link.getUrl())) {
-                    urlQueue.offer(link.getUrl());
+                    crawlManager.getUrlQueue().offer(link.getUrl());
                 }
             }
         } catch (Exception e) {
-            System.err.println("Failed to process: " + url + " - " + e.getMessage());
+            logger.log(Level.WARNING, "Failed to process URL: " + url, e);
         }
     }
 }
