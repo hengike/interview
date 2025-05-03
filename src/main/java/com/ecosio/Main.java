@@ -1,8 +1,10 @@
 package com.ecosio;
 
 import com.ecosio.dto.Link;
+import com.ecosio.validator.InputValidator;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.time.Duration;
 import java.util.List;
 
@@ -17,12 +19,24 @@ public class Main {
         if (args.length != 0) {
             baseUrl = args[0];
         }
-        WebCrawler crawler = CrawlerFactory.create(baseUrl, TIMEOUT, THREADS, SUB_DOMAIN_CHECK);
 
+        validate(baseUrl);
+        List<Link> allLinks = crawl(baseUrl);
+        writeOutput(allLinks);
+    }
+
+    private static void writeOutput(List<Link> allLinks) {
+        JsonFileWriter.writeLinksToJsonFile(allLinks, "links");
+    }
+
+    private static List<Link> crawl(String baseUrl) throws MalformedURLException {
+        WebCrawler crawler = CrawlerFactory.create(baseUrl, TIMEOUT, THREADS, SUB_DOMAIN_CHECK);
         crawler.startCrawling(baseUrl);
         crawler.waitForItToFinish();
+        return crawler.getAllLinksSorted();
+    }
 
-        List<Link> allLinks = crawler.getAllLinksSorted();
-        JsonFileWriter.writeLinksToJsonFile(allLinks, "links");
+    private static void validate(String baseUrl) {
+        InputValidator.validateUrl(baseUrl);
     }
 }
