@@ -3,8 +3,8 @@ package com.ecosio;
 import com.ecosio.dto.Link;
 import com.ecosio.utility.WebUtility;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -26,9 +26,16 @@ public class LinkExtractor {
     private static final List<String> EXCLUDED_SCHEMES = List.of("mailto:", "javascript:", "tel:");
     //private static final List<String> EXCLUDED_CHAR = List.of("#", "?", "&", "="); // TODO should I keep this?
 
-    public List<Link> extractLinks(String html, String baseUrl, String domain, Boolean subDomainCheck) throws MalformedURLException {
+    public List<Link> extractLinks(String html, String baseUrl, String domain, Boolean subDomainCheck) {
         List<Link> links = new ArrayList<>();
         Matcher matcher = LINK_PATTERN.matcher(html);
+
+        URI baseUri;
+        try {
+            baseUri = new URI(baseUrl);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid base URL: " + baseUrl, e);
+        }
 
         while (matcher.find()) {
             String href = matcher.group(1).trim();
@@ -36,24 +43,37 @@ public class LinkExtractor {
 
             if (shouldExclude(href)) continue;
 
-            URL absoluteUrl = new URL(new URL(baseUrl), href);
-            boolean domainMatches = subDomainCheck
-                    ? absoluteUrl.getHost().contains(domain)
-                    : absoluteUrl.getHost().equalsIgnoreCase(domain);
+            try {
+                URI resolved = baseUri.resolve(href);
+                String host = resolved.getHost();
 
-            if (domainMatches) {
-                logger.fine("Added link from domain: " + absoluteUrl);
-                links.add(new Link(
-                        label.isEmpty() ? absoluteUrl.toString() : label,
-                        absoluteUrl.toString(),
-                        WebUtility.normalizeUrl(absoluteUrl)
-                ));
-            } else {
-                logger.fine("Excluded link from different domain: " + absoluteUrl);
+                if (isMalformed(host)) continue;
+
+                boolean domainMatches = subDomainCheck
+                        ? host.contains(domain)
+                        : host.equalsIgnoreCase(domain);
+
+                if (domainMatches) {
+                    logger.fine("Added link from domain: " + resolved);
+                    links.add(new Link(
+                            label.isEmpty() ? resolved.toString() : label,
+                            resolved.toString(),
+                            WebUtility.normalizeUrl(resolved.toString())
+                    ));
+                } else {
+                    logger.fine("Excluded link from different domain: " + resolved);
+                }
+
+            } catch (IllegalArgumentException e) {
+                logger.fine("Invalid href: " + href + " – " + e.getMessage());
             }
         }
 
         return links;
+    }
+
+    private static boolean isMalformed(String host) {
+        return host == null;
     }
 
     private boolean shouldExclude(String href) {

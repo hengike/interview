@@ -1,9 +1,9 @@
 package com.ecosio.dto;
 
 public class Link {
-    String label;
-    String url;
-    String normalizedUrl;
+    private final String label;
+    private final String url;
+    private final String normalizedUrl;
 
     public Link(String label, String url, String normalizedUrl) {
         this.label = label;

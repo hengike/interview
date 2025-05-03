@@ -50,7 +50,7 @@ public class WebCrawler {
             }
 
             try {
-                Thread.sleep(100); // Poll every 100ms
+                Thread.sleep(100); // TODO busy-waiting, we should move to Future implementation?
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;

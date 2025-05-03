@@ -1,23 +1,50 @@
 package com.ecosio.utility;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 
 public class WebUtility {
-    public static String getDomain(String url) throws MalformedURLException {
-        URL u = new URL(url);
-        return u.getHost();
+
+    public static String getDomain(String url) {
+        try {
+            URI uri = URI.create(url);
+            String host = uri.getHost();
+            if (host == null) {
+                throw new IllegalArgumentException("URL does not have a valid host: " + url);
+            }
+            return host;
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid URL: " + url, e);
+        }
     }
 
-    public static String normalizeUrl(URL url) {
-        String normalized = url.getProtocol() + "://" + url.getHost();
+    public static String normalizeUrl(String url) {
+        try {
+            URI uri = URI.create(url);
+            StringBuilder normalized = new StringBuilder();
 
-        if (url.getPort() != -1 && url.getPort() != url.getDefaultPort()) {
-            normalized += ":" + url.getPort();
+            normalized.append(uri.getScheme()).append("://").append(uri.getHost());
+
+            int port = uri.getPort();
+            if (port != -1 && port != defaultPort(uri.getScheme())) {
+                normalized.append(":").append(port);
+            }
+
+            String path = uri.getPath();
+            if (path != null && !path.isEmpty()) {
+                normalized.append(path.replaceAll("/+$", ""));
+            }
+
+            return normalized.toString();
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid URL for normalization: " + url, e);
         }
+    }
 
-        normalized += url.getPath().replaceAll("/+$", ""); // remove trailing slash(es)
-
-        return normalized;
+    private static int defaultPort(String scheme) {
+        return switch (scheme.toLowerCase()) {
+            case "http" -> 80;
+            case "https" -> 443;
+            default -> -1;
+        };
     }
 }

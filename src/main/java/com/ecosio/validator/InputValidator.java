@@ -1,7 +1,6 @@
 package com.ecosio.validator;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 
 public class InputValidator {
 
@@ -13,11 +12,20 @@ public class InputValidator {
      */
     public static void validateUrl(String urlString) {
         try {
-            URL url = new URL(urlString);
-            if (url.getProtocol() == null || url.getHost() == null || url.getHost().isEmpty()) {
-                throw new MalformedURLException("Missing protocol or host.");
+            URI uri = URI.create(urlString);
+            String scheme = uri.getScheme();
+            String host = uri.getHost();
+
+            if (scheme == null || host == null || host.isEmpty()) {
+                throw new IllegalArgumentException("Missing scheme or host in URL: " + urlString);
             }
-        } catch (MalformedURLException e) {
+
+            // Optional: only allow HTTP/HTTPS
+            if (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https")) {
+                throw new IllegalArgumentException("Unsupported scheme: " + scheme);
+            }
+
+        } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid URL: " + urlString, e);
         }
     }
