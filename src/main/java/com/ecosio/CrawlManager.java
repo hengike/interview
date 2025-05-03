@@ -3,6 +3,7 @@ package com.ecosio;
 import com.ecosio.dto.Link;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.logging.Logger;
@@ -28,7 +29,7 @@ public class CrawlManager {
     private final ExecutorService executor;
 
     private final ConcurrentLinkedQueue<String> urlQueue;
-    private final CopyOnWriteArrayList<Link> allLinks;
+    private final List<Link> allLinks;
     private final List<Future<?>> futures;
 
     public CrawlManager(WebsiteFetcher fetcher, LinkExtractor extractor, String domain, Boolean subDomainCheck, int maxThreads) {
@@ -37,7 +38,7 @@ public class CrawlManager {
         this.domain = domain;
         this.subDomainCheck = subDomainCheck;
         this.urlQueue = new ConcurrentLinkedQueue<>();
-        this.allLinks = new CopyOnWriteArrayList<>();
+        this.allLinks = Collections.synchronizedList(new ArrayList<>());
         this.executor = new ThreadPoolExecutor(
                 maxThreads, maxThreads,
                 60L, TimeUnit.SECONDS,
@@ -105,7 +106,7 @@ public class CrawlManager {
         return urlQueue;
     }
 
-    public CopyOnWriteArrayList<Link> getAllLinks() {
+    public List<Link> getAllLinks() {
         return allLinks;
     }
 
