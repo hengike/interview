@@ -1,14 +1,24 @@
 package com.ecosio.dto;
 
+import static com.ecosio.utility.WebUtility.normalizeUrl;
+
 public class Link {
     private final String label;
     private final String url;
     private final String normalizedUrl;
 
-    public Link(String label, String url, String normalizedUrl) {
+    public Link(String label, String url) {
         this.label = label;
         this.url = url;
-        this.normalizedUrl = normalizedUrl;
+        this.normalizedUrl = getNormalizedUr(url);
+    }
+
+    private String getNormalizedUr(final String url) {
+        try {
+            return normalizeUrl(url);
+        } catch (IllegalArgumentException e) {
+            return url;
+        }
     }
 
     @Override

@@ -5,7 +5,9 @@ import com.ecosio.dto.Link;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
 /**
@@ -27,9 +29,12 @@ public class CrawlManager {
     private final String domain;
     private final Boolean subDomainCheck;
     private final ExecutorService executor;
+    private static final Set<Link> visitedUrls = ConcurrentHashMap.newKeySet();
 
     private final ConcurrentLinkedQueue<String> urlQueue;
     private final List<Link> allLinks;
+    private final CompletableFuture<?> future;
+    private final AtomicLong counter = new AtomicLong();
     private final List<Future<?>> futures;
 
     public CrawlManager(WebsiteFetcher fetcher, LinkExtractor extractor, String domain, Boolean subDomainCheck, int maxThreads) {
@@ -42,8 +47,10 @@ public class CrawlManager {
         this.executor = new ThreadPoolExecutor(
                 maxThreads, maxThreads,
                 60L, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>()
+                new LinkedBlockingQueue<>(),
+                Thread.ofVirtual().factory() // from java 24 -> lot of IO (HTTP call) and not much calculation, and no IO in synchronized block
         );
+        this.future = new CompletableFuture<Void>();
         this.futures = new ArrayList<>();
     }
 
@@ -52,18 +59,29 @@ public class CrawlManager {
      *
      * @param startUrl the initial URL to crawl
      */
-    public void startCrawling(String startUrl) {
-        urlQueue.offer(startUrl);
-        submitNewWorker(); // Submit the first worker
+    public CompletableFuture<?> startCrawling(String startUrl) {
+        submitNewWorker(new Link(startUrl, startUrl)); // Submit the first worker
         logger.info("Started crawling with: " + startUrl);
+        return future;
     }
 
     /**
      * Submits a new {@link CrawlerWorker} task to the executor and tracks the future.
      */
-    public void submitNewWorker() {
-        Future<?> future = executor.submit(new CrawlerWorker(this));
-        futures.add(future);
+    public void submitNewWorker(Link url) {
+        if (!visitedUrls.add(url)) {
+            logger.warning("Loop detected, skip URL: " + url);
+            return;
+        }
+        counter.incrementAndGet();
+        CompletableFuture
+                .runAsync(() -> new CrawlerWorker(this).run(url.getUrl()), executor)
+                .thenAccept(_ -> {
+                    if (counter.decrementAndGet() == 0) {
+                        future.complete(null);
+                        shutdownNow();
+                    }
+                });
     }
 
     /**
@@ -72,9 +90,7 @@ public class CrawlManager {
      * - no active threads are working
      */
     public boolean isFinished() {
-        return urlQueue.isEmpty()
-                && executor instanceof ThreadPoolExecutor tpe
-                && tpe.getActiveCount() == 0;
+        return counter.get() == 0;
     }
 
     /**

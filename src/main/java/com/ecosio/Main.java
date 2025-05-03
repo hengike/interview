@@ -20,19 +20,15 @@ public class Main {
         }
 
         validate(baseUrl);
-        List<Link> allLinks = crawl(baseUrl);
-        writeOutput(allLinks);
+        CrawlerFactory.create(baseUrl, TIMEOUT, THREADS, SUB_DOMAIN_CHECK).
+                startCrawling(baseUrl).
+                thenAccept(Main::writeOutput)
+                .join();
+
     }
 
     private static void writeOutput(List<Link> allLinks) {
         JsonFileWriter.writeLinksToJsonFile(allLinks, "links");
-    }
-
-    private static List<Link> crawl(String baseUrl) {
-        WebCrawler crawler = CrawlerFactory.create(baseUrl, TIMEOUT, THREADS, SUB_DOMAIN_CHECK);
-        crawler.startCrawling(baseUrl);
-        crawler.waitForItToFinish();
-        return crawler.getAllLinksSorted();
     }
 
     private static void validate(String baseUrl) {

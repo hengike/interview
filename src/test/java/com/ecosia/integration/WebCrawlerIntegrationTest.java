@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -38,13 +37,12 @@ public class WebCrawlerIntegrationTest {
     }
 
     @Test
-    public void testCrawlLocalSiteAndGenerateJson() throws MalformedURLException {
+    public void testCrawlLocalSiteAndGenerateJson() {
         String startUrl = "http://localhost:" + PORT + "/index.html";
         String domain = "http://localhost";
 
         WebCrawler crawler = CrawlerFactory.create(domain, Duration.ofSeconds(5), 2, true);
-        crawler.startCrawling(startUrl);
-        crawler.waitForItToFinish();
+        crawler.startCrawling(startUrl).join();
         List<Link> links = crawler.getAllLinksSorted();
 
         String outputWithTimestamp = JsonFileWriter.writeLinksToJsonFile(links, OUTPUT_FILE);

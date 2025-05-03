@@ -1,7 +1,6 @@
 package com.ecosio;
 
 import com.ecosio.dto.Link;
-import com.ecosio.utility.WebUtility;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -57,8 +56,7 @@ public class LinkExtractor {
                     logger.fine("Added link from domain: " + resolved);
                     links.add(new Link(
                             label.isEmpty() ? resolved.toString() : label,
-                            resolved.toString(),
-                            WebUtility.normalizeUrl(resolved.toString())
+                            resolved.toString()
                     ));
                 } else {
                     logger.fine("Excluded link from different domain: " + resolved);

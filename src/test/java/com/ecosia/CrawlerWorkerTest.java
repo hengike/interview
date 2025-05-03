@@ -37,7 +37,7 @@ public class CrawlerWorkerTest {
         // GIVEN
         String startUrl = "https://example.com";
         String html = "<a href='https://example.com/page1'>Link</a>";
-        Link link = new Link("https://example.com/page1", "https://example.com/page1", "https://example.com/page1");
+        Link link = new Link("https://example.com/page1", "https://example.com/page1");
 
         urlQueue.offer(startUrl);
 
@@ -53,7 +53,7 @@ public class CrawlerWorkerTest {
         CrawlerWorker worker = new CrawlerWorker(crawlManager);
 
         // WHEN
-        Thread thread = new Thread(worker);
+        Thread thread = new Thread(() -> worker.run(startUrl));
         thread.start();
         thread.join(500); // wait up to 500ms
 
