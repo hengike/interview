@@ -1,5 +1,7 @@
 package com.ecosio.dto;
 
+import java.util.Objects;
+
 import static com.ecosio.utility.WebUtility.normalizeUrl;
 
 public class Link {
@@ -24,6 +26,18 @@ public class Link {
     @Override
     public String toString() {
         return "Label: " + getShortLabel() + " | URL: " + getUrl() + " | Normalized URL: " + getNormalizedUrl();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        final Link link = (Link) o;
+        return Objects.equals(getNormalizedUrl(), link.getNormalizedUrl());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getNormalizedUrl());
     }
 
     public String getShortLabel() {

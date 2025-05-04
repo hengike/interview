@@ -6,7 +6,6 @@ import com.ecosio.WebCrawler;
 import com.ecosio.WebsiteFetcher;
 import com.ecosio.dto.Link;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -24,7 +23,7 @@ public class WebCrawlerTest {
     @BeforeEach
     public void setUp() {
         crawlManagerMock = mock(CrawlManager.class);
-        when(crawlManagerMock.startCrawling(anyString())).thenReturn(CompletableFuture.completedFuture(null));
+        when(crawlManagerMock.startCrawling(anyString(), any())).thenReturn(CompletableFuture.completedFuture(null));
         webCrawler = new WebCrawler(crawlManagerMock, Duration.ofSeconds(2));
     }
 
@@ -32,7 +31,7 @@ public class WebCrawlerTest {
     public void testStartCrawlingDelegatesToManager() {
         String url = "https://example.com";
         webCrawler.startCrawling(url);
-        verify(crawlManagerMock).startCrawling(url);
+        verify(crawlManagerMock).startCrawling(url, Duration.ofSeconds(2));
     }
 
     @Test
@@ -52,13 +51,6 @@ public class WebCrawlerTest {
         // THEN
         assertEquals("https://a.com", sorted.get(0).getUrl());
         assertEquals("https://b.com", sorted.get(1).getUrl());
-    }
-
-    @Disabled
-    @Test
-    public void testWaitForItToFinishSuccess() {
-        when(crawlManagerMock.isFinished()).thenReturn(false, false, true);
-        verify(crawlManagerMock).shutdownNow();
     }
 
 }

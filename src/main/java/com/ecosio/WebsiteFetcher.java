@@ -15,20 +15,18 @@ public class WebsiteFetcher {
 
     public static final int TIMEOUT_SECONDS = 3;
     private static final Logger logger = Logger.getLogger(WebsiteFetcher.class.getName());
+    static final HttpClient client = HttpClient.newBuilder()
+            .followRedirects(HttpClient.Redirect.NORMAL)
+            .connectTimeout(Duration.ofSeconds(TIMEOUT_SECONDS))
+            .build();
 
     public String fetchContent(String urlString) throws IOException, InterruptedException {
         try {
-            HttpClient client = HttpClient.newBuilder()
-                    .followRedirects(HttpClient.Redirect.NORMAL)
-                    .connectTimeout(Duration.ofSeconds(TIMEOUT_SECONDS))
-                    .build();
-
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(urlString))
                     .timeout(Duration.ofSeconds(TIMEOUT_SECONDS))
                     .GET()
                     .build();
-
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 

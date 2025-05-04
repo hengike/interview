@@ -21,7 +21,7 @@ public class WebCrawler {
     }
 
     public CompletableFuture<List<Link>> startCrawling(String startUrl) {
-        return crawlManager.startCrawling(startUrl)
+        return crawlManager.startCrawling(startUrl, timeout)
                         .thenApply(_ -> getAllLinksSorted());
     }
 

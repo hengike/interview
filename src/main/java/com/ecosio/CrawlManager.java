@@ -2,10 +2,8 @@ package com.ecosio;
 
 import com.ecosio.dto.Link;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.time.Duration;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
@@ -31,27 +29,27 @@ public class CrawlManager {
     private final ExecutorService executor;
     private static final Set<Link> visitedUrls = ConcurrentHashMap.newKeySet();
 
-    private final ConcurrentLinkedQueue<String> urlQueue;
     private final List<Link> allLinks;
     private final CompletableFuture<?> future;
     private final AtomicLong counter = new AtomicLong();
-    private final List<Future<?>> futures;
+    private final Timer timer;
 
     public CrawlManager(WebsiteFetcher fetcher, LinkExtractor extractor, String domain, Boolean subDomainCheck, int maxThreads) {
         this.fetcher = fetcher;
         this.extractor = extractor;
         this.domain = domain;
         this.subDomainCheck = subDomainCheck;
-        this.urlQueue = new ConcurrentLinkedQueue<>();
+
         this.allLinks = Collections.synchronizedList(new ArrayList<>());
         this.executor = new ThreadPoolExecutor(
                 maxThreads, maxThreads,
                 60L, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(),
-                Thread.ofVirtual().factory() // from java 24 -> lot of IO (HTTP call) and not much calculation, and no IO in synchronized block
+                new LinkedBlockingQueue<>()/*,
+                Thread.ofVirtual().factory() // from java 24 -> lot of IO (HTTP call) and not much calculation, and no IO in synchronized block*/
         );
         this.future = new CompletableFuture<Void>();
-        this.futures = new ArrayList<>();
+        // Alternatively, we could use scheduler = Executors.newSingleThreadScheduledExecutor();
+        timer = new Timer(true);
     }
 
     /**
@@ -59,7 +57,8 @@ public class CrawlManager {
      *
      * @param startUrl the initial URL to crawl
      */
-    public CompletableFuture<?> startCrawling(String startUrl) {
+    public CompletableFuture<?> startCrawling(String startUrl, Duration timeout) {
+        setUpTimeoutTask(timeout);
         submitNewWorker(new Link(startUrl, startUrl)); // Submit the first worker
         logger.info("Started crawling with: " + startUrl);
         return future;
@@ -82,6 +81,19 @@ public class CrawlManager {
                         shutdownNow();
                     }
                 });
+    }
+
+    private void setUpTimeoutTask(Duration timeout) {
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                if (!isFinished()) {
+                    logger.warning("Timeout Called! Remained: " + counter.get());
+                    executor.shutdownNow();
+                    future.complete(null);
+                }
+            }
+        }, timeout.toMillis());
     }
 
     /**
@@ -109,19 +121,6 @@ public class CrawlManager {
         executor.shutdownNow();
     }
 
-    /**
-     * Indicates whether a new worker should be spawned.
-     * A new worker is allowed if:
-     * - there are multiple URLs in the queue
-     */
-    public boolean shouldSpawnNew() {
-        return urlQueue.size() > 2;
-    }
-
-    public ConcurrentLinkedQueue<String> getUrlQueue() {
-        return urlQueue;
-    }
-
     public List<Link> getAllLinks() {
         return allLinks;
     }
@@ -140,9 +139,5 @@ public class CrawlManager {
 
     public Boolean getSubDomainCheck() {
         return subDomainCheck;
-    }
-
-    public List<Future<?>> getFutures(){
-        return this.futures;
     }
 }

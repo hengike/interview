@@ -19,7 +19,6 @@ public class CrawlerWorkerTest {
     private WebsiteFetcher fetcher;
     private LinkExtractor extractor;
     private CrawlManager crawlManager;
-    private ConcurrentLinkedQueue<String> urlQueue;
     private CopyOnWriteArrayList<Link> allLinks;
 
     @BeforeEach
@@ -28,7 +27,6 @@ public class CrawlerWorkerTest {
         extractor = mock(LinkExtractor.class);
         crawlManager = mock(CrawlManager.class);
 
-        urlQueue = new ConcurrentLinkedQueue<>();
         allLinks = new CopyOnWriteArrayList<>();
     }
 
@@ -39,9 +37,6 @@ public class CrawlerWorkerTest {
         String html = "<a href='https://example.com/page1'>Link</a>";
         Link link = new Link("https://example.com/page1", "https://example.com/page1");
 
-        urlQueue.offer(startUrl);
-
-        when(crawlManager.getUrlQueue()).thenReturn(urlQueue);
         when(crawlManager.getFetcher()).thenReturn(fetcher);
         when(crawlManager.getExtractor()).thenReturn(extractor);
         when(crawlManager.getDomain()).thenReturn("example.com");
