@@ -8,7 +8,7 @@ import java.util.List;
 
 public class Main {
 
-    public static final Duration TIMEOUT = Duration.ofSeconds(5);
+    public static final Duration TIMEOUT = Duration.ofHours(1);
     public static final int THREADS = 10;
     public static final boolean SUB_DOMAIN_CHECK = false;
 
